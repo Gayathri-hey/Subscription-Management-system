@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📦 Subscription Management System
 
-## Getting Started
+A unified, full-stack Subscription Management System supporting **Admin**, **Staff**, and **Customer** roles.
 
-First, run the development server:
+---
+
+## ✨ Features (Planned)
+
+- 🔐 Role-based authentication (Admin / Staff / Customer)
+- 👥 Staff management
+- 📦 Product & variant management
+- 📋 Subscription plans
+- 💼 Quotation templates & customer quotations
+- 🔄 Subscription lifecycle (activate, pause, cancel, renew)
+- 🧾 Automatic recurring invoice generation
+- 💳 Payment tracking
+- 📊 Revenue & analytics dashboard
+- 🏷️ Discount & tax management
+- 🌐 Customer self-service portal
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer     | Technology                                |
+|-----------|-------------------------------------------|
+| Frontend  | React 18 · TypeScript · Vite · React Router |
+| Styling   | Vanilla CSS with Custom Design System      |
+| Backend   | Node.js · Express · TypeScript             |
+| Database  | MongoDB (Mongoose)                         |
+| Auth      | JWT (Access + Refresh tokens)              |
+| Jobs      | node-cron                                  |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js ≥ 18
+- MongoDB ≥ 6 (local or Atlas)
+
+### Installation
 
 ```bash
+# 1. Clone the repository
+git clone <repo-url>
+cd subscription-management-system
+
+# 2. Set up environment variables
+cp .env.example .env
+# Edit .env with your MongoDB URI, JWT secrets, and SMTP settings
+
+# 3. Install all dependencies
+npm run install:all
+
+# 4. Start development servers
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Client**: http://localhost:5173
+- **Server**: http://localhost:5000
+- **Health check**: http://localhost:5000/api/health
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📁 Project Structure
 
-## Learn More
+```
+subscription-management-system/
+├── client/          # React + TypeScript frontend (Vite)
+├── server/          # Express + TypeScript backend
+├── docs/            # Architecture, API contracts, DB schema, guidelines
+├── .env.example     # Environment variable template
+├── .gitignore
+└── package.json     # Root workspace scripts
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📖 Documentation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Document | Description |
+|----------|-------------|
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design, tech stack, data flow |
+| [DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md) | All MongoDB collection schemas |
+| [API_CONTRACTS.md](docs/API_CONTRACTS.md) | All REST endpoint definitions |
+| [TEAM_GUIDELINES.md](docs/TEAM_GUIDELINES.md) | Coding standards, git workflow, task roadmap |
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📌 Task Roadmap
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [x] TASK 1 — Initialize project structure
+- [ ] TASK 2 — User authentication
+- [ ] TASK 3 — Staff management
+- [ ] TASK 4 — Product & Variant management
+- [ ] TASK 5 — Subscription plans
+- [ ] TASK 6 — Tax & Discount management
+- [ ] TASK 7 — Quotation management
+- [ ] TASK 8 — Subscription lifecycle
+- [ ] TASK 9 — Recurring invoice generation
+- [ ] TASK 10 — Payment tracking
+- [ ] TASK 11 — Revenue analytics
+- [ ] TASK 12 — Customer self-service portal

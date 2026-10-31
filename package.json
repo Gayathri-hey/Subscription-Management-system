@@ -1,38 +1,22 @@
 {
   "name": "subscription-management-system",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "A unified Subscription Management System supporting Admin, Staff, and Customer roles",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev:client": "npm run dev --prefix client",
+    "dev:server": "npm run dev --prefix server",
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "build:client": "npm run build --prefix client",
+    "build:server": "npm run build --prefix server",
+    "install:client": "npm install --prefix client",
+    "install:server": "npm install --prefix server",
+    "install:all": "npm install && npm run install:client && npm run install:server"
   },
-  "dependencies": {
-    "@hookform/resolvers": "^6.0.2",
-    "@prisma/client": "^7.10.1",
-    "@react-pdf/renderer": "^4.9.0",
-    "bcryptjs": "^3.0.3",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "lucide-react": "^1.65.0",
-    "next": "16.4.3",
-    "next-auth": "^5.0.0-beta.32",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
-    "react-hook-form": "^7.91.0",
-    "recharts": "^3.10.1",
-    "tailwind-merge": "^3.7.0",
-    "zod": "^4.6.7"
-  },
+  "keywords": ["subscription", "management", "saas"],
+  "author": "",
+  "license": "ISC",
   "devDependencies": {
-    "@tailwindcss/turbopack": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.4.3",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "concurrently": "^8.2.2"
   }
 }
