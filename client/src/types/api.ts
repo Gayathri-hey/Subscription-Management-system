@@ -28,7 +28,8 @@ export interface ApiErrorResponse {
   statusCode?: number;
 }
 
-export type Role = 'ADMIN' | 'STAFF' | 'CUSTOMER';
+import type { Role } from './roles';
+export type { Role };
 
 export interface User {
   id: string;

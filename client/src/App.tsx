@@ -4,8 +4,9 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { RoleGuard } from '@/routes/RoleGuard';
 
-// Pages
+// Public Auth Pages
 import { LoginPage } from '@/pages/auth/LoginPage';
+import { RegisterPage } from '@/pages/auth/RegisterPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ShowcasePage } from '@/pages/ShowcasePage';
 
@@ -24,25 +25,22 @@ import { StaffQuotations } from '@/pages/staff/StaffQuotations';
 import { StaffSubscriptions } from '@/pages/staff/StaffSubscriptions';
 
 // Customer Pages
-import { CustomerPortal } from '@/pages/customer/CustomerPortal';
+import { CustomerDashboard } from '@/pages/customer/CustomerDashboard';
 import { CustomerSubscriptions } from '@/pages/customer/CustomerSubscriptions';
 import { CustomerInvoices } from '@/pages/customer/CustomerInvoices';
 import { CustomerProfile } from '@/pages/customer/CustomerProfile';
+
+// Route Definitions
+import { ROUTE_PATHS, getDefaultDashboardForRole } from '@/types/routes';
 
 /** Root redirect helper based on active authentication and role */
 const RootRedirect: React.FC = () => {
   const { user, role, isAuthenticated } = useAuth();
 
-  if (!isAuthenticated || !user) {
-    return <Navigate to="/login" replace />;
+  if (!isAuthenticated || !user || !role) {
+    return <Navigate to={ROUTE_PATHS.LOGIN} replace />;
   }
-  if (role === 'STAFF') {
-    return <Navigate to="/staff" replace />;
-  }
-  if (role === 'CUSTOMER') {
-    return <Navigate to="/customer" replace />;
-  }
-  return <Navigate to="/admin" replace />;
+  return <Navigate to={getDefaultDashboardForRole(role)} replace />;
 };
 
 function App() {
@@ -52,6 +50,7 @@ function App() {
         <Routes>
           {/* Public Authentication Routes */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="/" element={<RootRedirect />} />
 
           {/* Unified Dashboard Shell Layout */}
@@ -59,9 +58,10 @@ function App() {
             {/* UI System Showcase (accessible for reviewer testing) */}
             <Route path="/showcase" element={<ShowcasePage />} />
 
-            {/* Admin Placeholder Routes */}
+            {/* Admin Protected Routes */}
             <Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
-              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/products" element={<AdminProducts />} />
               <Route path="/admin/plans" element={<AdminPlans />} />
@@ -69,17 +69,19 @@ function App() {
               <Route path="/admin/settings" element={<AdminSettings />} />
             </Route>
 
-            {/* Staff Placeholder Routes */}
+            {/* Staff Protected Routes */}
             <Route element={<RoleGuard allowedRoles={['ADMIN', 'STAFF']} />}>
-              <Route path="/staff" element={<StaffDashboard />} />
+              <Route path="/staff/dashboard" element={<StaffDashboard />} />
+              <Route path="/staff" element={<Navigate to="/staff/dashboard" replace />} />
               <Route path="/staff/customers" element={<StaffCustomers />} />
               <Route path="/staff/quotations" element={<StaffQuotations />} />
               <Route path="/staff/subscriptions" element={<StaffSubscriptions />} />
             </Route>
 
-            {/* Customer Self-Service Placeholder Routes */}
+            {/* Customer Self-Service Protected Routes */}
             <Route element={<RoleGuard allowedRoles={['ADMIN', 'CUSTOMER']} />}>
-              <Route path="/customer" element={<CustomerPortal />} />
+              <Route path="/customer/dashboard" element={<CustomerDashboard />} />
+              <Route path="/customer" element={<Navigate to="/customer/dashboard" replace />} />
               <Route path="/customer/subscriptions" element={<CustomerSubscriptions />} />
               <Route path="/customer/invoices" element={<CustomerInvoices />} />
               <Route path="/customer/profile" element={<CustomerProfile />} />

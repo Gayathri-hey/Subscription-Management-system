@@ -23,6 +23,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { Role } from '@/types/api';
+import { ROUTE_PATHS } from '@/types/routes';
 
 interface NavItem {
   title: string;
@@ -32,26 +33,26 @@ interface NavItem {
 }
 
 const ADMIN_NAV_ITEMS: NavItem[] = [
-  { title: 'Dashboard', path: '/admin', icon: LayoutDashboard },
-  { title: 'User Management', path: '/admin/users', icon: Users, badge: 'Staff & Clients' },
-  { title: 'Product Catalog', path: '/admin/products', icon: Package },
-  { title: 'Subscription Plans', path: '/admin/plans', icon: Layers },
-  { title: 'Financial Reports', path: '/admin/reports', icon: BarChart3 },
-  { title: 'System Settings', path: '/admin/settings', icon: Settings },
+  { title: 'Dashboard', path: ROUTE_PATHS.ADMIN_DASHBOARD, icon: LayoutDashboard },
+  { title: 'User Management', path: ROUTE_PATHS.ADMIN_USERS, icon: Users, badge: 'Staff & Clients' },
+  { title: 'Product Catalog', path: ROUTE_PATHS.ADMIN_PRODUCTS, icon: Package },
+  { title: 'Subscription Plans', path: ROUTE_PATHS.ADMIN_PLANS, icon: Layers },
+  { title: 'Financial Reports', path: ROUTE_PATHS.ADMIN_REPORTS, icon: BarChart3 },
+  { title: 'System Settings', path: ROUTE_PATHS.ADMIN_SETTINGS, icon: Settings },
 ];
 
 const STAFF_NAV_ITEMS: NavItem[] = [
-  { title: 'Staff Overview', path: '/staff', icon: LayoutDashboard },
-  { title: 'Customers', path: '/staff/customers', icon: Users },
-  { title: 'Quotations', path: '/staff/quotations', icon: FileText, badge: 'Quotes' },
-  { title: 'Subscriptions', path: '/staff/subscriptions', icon: CreditCard },
+  { title: 'Staff Overview', path: ROUTE_PATHS.STAFF_DASHBOARD, icon: LayoutDashboard },
+  { title: 'Customers', path: ROUTE_PATHS.STAFF_CUSTOMERS, icon: Users },
+  { title: 'Quotations', path: ROUTE_PATHS.STAFF_QUOTATIONS, icon: FileText, badge: 'Quotes' },
+  { title: 'Subscriptions', path: ROUTE_PATHS.STAFF_SUBSCRIPTIONS, icon: CreditCard },
 ];
 
 const CUSTOMER_NAV_ITEMS: NavItem[] = [
-  { title: 'Portal Overview', path: '/customer', icon: LayoutDashboard },
-  { title: 'My Subscriptions', path: '/customer/subscriptions', icon: CreditCard },
-  { title: 'Invoices & Billing', path: '/customer/invoices', icon: FileText },
-  { title: 'Account Profile', path: '/customer/profile', icon: User },
+  { title: 'Portal Overview', path: ROUTE_PATHS.CUSTOMER_DASHBOARD, icon: LayoutDashboard },
+  { title: 'My Subscriptions', path: ROUTE_PATHS.CUSTOMER_SUBSCRIPTIONS, icon: CreditCard },
+  { title: 'Invoices & Billing', path: ROUTE_PATHS.CUSTOMER_INVOICES, icon: FileText },
+  { title: 'Account Profile', path: ROUTE_PATHS.CUSTOMER_PROFILE, icon: User },
 ];
 
 export interface SidebarProps {
@@ -103,26 +104,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, className }) 
         />
       )}
 
-      {/* Sidebar Content */}
+      {/* Sidebar Container */}
       <aside
         className={cn(
-          'fixed top-0 bottom-0 left-0 z-50 flex w-72 flex-col border-r border-border bg-sidebar text-sidebar-foreground transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 shadow-xl lg:shadow-none',
+          'fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-sidebar-border bg-sidebar transition-transform duration-300 ease-in-out lg:static lg:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full',
           className
         )}
       >
-        {/* Brand / Logo Header */}
+        {/* App Branding */}
         <div className="flex h-16 items-center justify-between px-6 border-b border-sidebar-border">
           <div className="flex items-center space-x-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-primary to-indigo-400 text-white shadow-md shadow-primary/20">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-primary to-indigo-500 text-white shadow-md shadow-primary/30">
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
-              <span className="font-bold text-base tracking-tight text-foreground block leading-tight">
+              <span className="text-base font-bold tracking-tight text-foreground">
                 SubScribe<span className="text-primary font-black">Pro</span>
               </span>
-              <span className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
-                Enterprise SMS
+              <span className="block text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                Subscription Engine
               </span>
             </div>
           </div>
@@ -159,12 +160,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, className }) 
 
           {navItems.map((item) => {
             const Icon = item.icon;
+            const currentPath = location.pathname;
             const isActive =
-              location.pathname === item.path ||
-              (item.path !== '/admin' &&
-                item.path !== '/staff' &&
-                item.path !== '/customer' &&
-                location.pathname.startsWith(item.path));
+              currentPath === item.path ||
+              (item.path.endsWith('/dashboard') &&
+                (currentPath === item.path.replace('/dashboard', '') || currentPath === item.path)) ||
+              (!item.path.endsWith('/dashboard') && currentPath.startsWith(item.path));
 
             return (
               <NavLink
@@ -183,14 +184,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, className }) 
                 <div className="flex items-center space-x-3">
                   <Icon
                     className={cn(
-                      'h-4 w-4 shrink-0 transition-transform group-hover:scale-110',
-                      isActive ? 'text-primary-foreground' : 'text-muted-foreground group-hover:text-sidebar-foreground'
+                      'h-4 w-4 shrink-0 transition-colors',
+                      isActive ? 'text-primary-foreground' : 'text-muted-foreground group-hover:text-foreground'
                     )}
                   />
                   <span>{item.title}</span>
                 </div>
-                {item.badge && !isActive && (
-                  <span className="text-[10px] rounded bg-sidebar-accent px-1.5 py-0.5 text-muted-foreground">
+                {item.badge && (
+                  <span
+                    className={cn(
+                      'text-[10px] font-semibold px-2 py-0.5 rounded-full',
+                      isActive
+                        ? 'bg-primary-foreground/20 text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
+                    )}
+                  >
                     {item.badge}
                   </span>
                 )}
@@ -238,7 +246,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, className }) 
                   {user?.name || 'Authorized User'}
                 </p>
                 <p className="truncate text-[11px] text-muted-foreground">
-                  {user?.email || 'user@example.com'}
+                  {user?.company || role}
                 </p>
               </div>
             </div>
@@ -260,4 +268,3 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, className }) 
 };
 
 export default Sidebar;
-

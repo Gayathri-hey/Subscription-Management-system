@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Role } from '@/types/api';
+import { getDefaultDashboardForRole, ROUTE_PATHS } from '@/types/routes';
 
 interface RoleGuardProps {
   allowedRoles?: Role[];
@@ -25,7 +26,7 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ allowedRoles, children }) 
   }
 
   if (!isAuthenticated || !user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={ROUTE_PATHS.LOGIN} replace />;
   }
 
   if (allowedRoles && role && !allowedRoles.includes(role)) {
@@ -40,9 +41,8 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ allowedRoles, children }) 
         </p>
         <Button
           onClick={() => {
-            if (role === 'ADMIN') window.location.href = '/admin';
-            else if (role === 'STAFF') window.location.href = '/staff';
-            else window.location.href = '/customer';
+            const destination = role ? getDefaultDashboardForRole(role) : ROUTE_PATHS.LOGIN;
+            window.location.href = destination;
           }}
         >
           Return to My Workspace
@@ -55,4 +55,3 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ allowedRoles, children }) 
 };
 
 export default RoleGuard;
-

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   Sparkles,
   Shield,
@@ -17,6 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/context/AuthContext';
 import { apiClient } from '@/services/apiClient';
 import type { Role, User } from '@/types/api';
+import { getDefaultDashboardForRole } from '@/types/routes';
 
 const DEMO_PRESETS: { role: Role; label: string; email: string; name: string; icon: React.ElementType }[] = [
   {
@@ -73,7 +74,7 @@ export const LoginPage: React.FC = () => {
 
         if (response.data?.user) {
           login(response.data.user, response.data.accessToken);
-          navigateByRole(response.data.user.role);
+          navigate(getDefaultDashboardForRole(response.data.user.role));
           return;
         }
       } catch {
@@ -91,7 +92,7 @@ export const LoginPage: React.FC = () => {
       };
 
       login(demoUser, `demo_token_${selectedRole.toLowerCase()}`);
-      navigateByRole(selectedRole);
+      navigate(getDefaultDashboardForRole(selectedRole));
     } catch (err: unknown) {
       setErrorMessage(
         err instanceof Error ? err.message : 'Invalid credentials. Please verify your email and password.'
@@ -99,12 +100,6 @@ export const LoginPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const navigateByRole = (role: Role) => {
-    if (role === 'ADMIN') navigate('/admin');
-    else if (role === 'STAFF') navigate('/staff');
-    else navigate('/customer');
   };
 
   return (
@@ -218,8 +213,16 @@ export const LoginPage: React.FC = () => {
             </form>
           </CardContent>
 
-          <CardFooter className="flex justify-center border-t border-border/60 pt-4 text-xs text-muted-foreground">
-            <span>Powered by React 19, Vite, Tailwind CSS & shadcn/ui</span>
+          <CardFooter className="flex flex-col space-y-2 border-t border-border/60 pt-4 text-xs text-muted-foreground">
+            <div className="text-center">
+              <span>Don't have an account? </span>
+              <Link to="/register" className="text-primary font-semibold hover:underline">
+                Create an account
+              </Link>
+            </div>
+            <div className="text-center text-[11px] text-muted-foreground/60">
+              <span>Powered by React 19, Vite, Tailwind CSS & shadcn/ui</span>
+            </div>
           </CardFooter>
         </Card>
       </div>
@@ -228,4 +231,3 @@ export const LoginPage: React.FC = () => {
 };
 
 export default LoginPage;
-

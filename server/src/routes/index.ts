@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import healthRoutes from './health.routes';
+import authRoutes from './auth.routes';
 
 const router = Router();
 
 // ─── Modular Routes ───────────────────────────────────────────────────────────
 router.use('/health', healthRoutes);
+router.use('/auth', authRoutes);
 
 // Placeholder modules for future tasks
-// router.use('/auth', authRoutes);
 // router.use('/users', userRoutes);
 // router.use('/products', productRoutes);
 // router.use('/plans', planRoutes);
@@ -20,4 +21,3 @@ router.use('/health', healthRoutes);
 // router.use('/analytics', analyticsRoutes);
 
 export default router;
-

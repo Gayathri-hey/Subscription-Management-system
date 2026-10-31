@@ -15,6 +15,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { Role } from '@/types/api';
+import { getRouteMetadata, getDefaultDashboardForRole } from '@/types/routes';
 
 export interface NavbarProps {
   onMenuToggle: () => void;
@@ -27,22 +28,25 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle }) => {
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
 
-  // Compute readable breadcrumb title
+  // Compute readable breadcrumb title from RouteMetadata or fallback
   const getBreadcrumbTitle = () => {
+    const meta = getRouteMetadata(location.pathname);
+    if (meta?.breadcrumb) return meta.breadcrumb;
+
     const path = location.pathname;
-    if (path === '/admin') return 'Admin Dashboard';
+    if (path === '/admin' || path === '/admin/dashboard') return 'Admin Dashboard';
     if (path === '/admin/users') return 'User & Staff Management';
     if (path === '/admin/products') return 'Product & Variant Catalog';
     if (path === '/admin/plans') return 'Subscription Pricing Plans';
     if (path === '/admin/reports') return 'Revenue & Financial Analytics';
     if (path === '/admin/settings') return 'System Configuration';
 
-    if (path === '/staff') return 'Staff Operations Dashboard';
+    if (path === '/staff' || path === '/staff/dashboard') return 'Staff Operations Dashboard';
     if (path === '/staff/customers') return 'Customer Directory';
     if (path === '/staff/quotations') return 'Quotation Generator';
     if (path === '/staff/subscriptions') return 'Customer Subscriptions';
 
-    if (path === '/customer') return 'Customer Self-Service Portal';
+    if (path === '/customer' || path === '/customer/dashboard') return 'Customer Self-Service Portal';
     if (path === '/customer/subscriptions') return 'My Subscriptions & Upgrades';
     if (path === '/customer/invoices') return 'Billing History & Invoices';
     if (path === '/customer/profile') return 'Account Profile & Security';
@@ -55,9 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle }) => {
   const handleRoleChange = (newRole: Role) => {
     switchRole(newRole);
     setRoleMenuOpen(false);
-    if (newRole === 'ADMIN') navigate('/admin');
-    if (newRole === 'STAFF') navigate('/staff');
-    if (newRole === 'CUSTOMER') navigate('/customer');
+    navigate(getDefaultDashboardForRole(newRole));
   };
 
   const toggleTheme = () => {
@@ -101,89 +103,90 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle }) => {
         <div className="relative">
           <button
             onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-            className="flex items-center gap-1.5 rounded-full border border-border bg-card/80 px-3 py-1.5 text-xs font-semibold text-foreground shadow-sm hover:bg-accent hover:border-primary/40 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
-            title="Switch Simulated Role"
+            className="flex items-center space-x-2 rounded-xl border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/15 transition-all shadow-sm"
+            aria-expanded={roleMenuOpen}
+            aria-haspopup="true"
           >
-            <span className="text-muted-foreground hidden sm:inline">Role:</span>
-            <span className="text-primary font-bold">{role}</span>
-            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Workspace: <strong>{role || 'Select'}</strong></span>
+            <ChevronDown className={cn('h-3.5 w-3.5 transition-transform duration-200', roleMenuOpen && 'rotate-180')} />
           </button>
 
           {roleMenuOpen && (
-            <>
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setRoleMenuOpen(false)}
-              />
-              <div className="absolute right-0 mt-2 z-50 w-56 rounded-xl border border-border bg-card p-1.5 shadow-xl animate-in fade-in zoom-in-95">
-                <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border mb-1">
-                  Switch Active Role
-                </div>
+            <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-border bg-card p-2 shadow-2xl backdrop-blur-lg z-50 animate-in fade-in-50 zoom-in-95">
+              <div className="px-3 py-2 border-b border-border/60">
+                <p className="text-xs font-semibold text-foreground">Switch Role Persona</p>
+                <p className="text-[10px] text-muted-foreground">Test role-guarded permissions live</p>
+              </div>
+
+              <div className="py-1.5 space-y-1">
                 {(['ADMIN', 'STAFF', 'CUSTOMER'] as Role[]).map((r) => {
-                  const isSelected = role === r;
-                  const Icon =
-                    r === 'ADMIN' ? Shield : r === 'STAFF' ? Briefcase : UserCheck;
+                  const isCurrent = role === r;
+                  const Icon = r === 'ADMIN' ? Shield : r === 'STAFF' ? Briefcase : UserCheck;
 
                   return (
                     <button
                       key={r}
                       onClick={() => handleRoleChange(r)}
                       className={cn(
-                        'flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors',
-                        isSelected
-                          ? 'bg-primary/10 text-primary font-semibold'
-                          : 'text-foreground hover:bg-accent'
+                        'flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs transition-colors',
+                        isCurrent
+                          ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
+                          : 'text-foreground hover:bg-accent hover:text-accent-foreground'
                       )}
                     >
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2.5">
                         <Icon className="h-4 w-4" />
-                        <span>{r} Workspace</span>
+                        <div className="text-left">
+                          <div>{r}</div>
+                          <div className={cn('text-[10px]', isCurrent ? 'text-primary-foreground/80' : 'text-muted-foreground')}>
+                            {r === 'ADMIN' && 'Full system control'}
+                            {r === 'STAFF' && 'Quotations & clients'}
+                            {r === 'CUSTOMER' && 'Self-service portal'}
+                          </div>
+                        </div>
                       </div>
-                      {isSelected && <Check className="h-4 w-4 text-primary" />}
+                      {isCurrent && <Check className="h-4 w-4 shrink-0" />}
                     </button>
                   );
                 })}
               </div>
-            </>
+            </div>
           )}
         </div>
 
-        {/* Theme toggle */}
-        <Button
-          variant="ghost"
-          size="icon-sm"
+        {/* Theme Toggle */}
+        <button
           onClick={toggleTheme}
-          title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-          className="text-muted-foreground hover:text-foreground"
+          className="rounded-xl border border-border bg-card p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          aria-label="Toggle color theme"
         >
           {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </Button>
+        </button>
 
-        {/* Notifications */}
-        <div className="relative">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="relative text-muted-foreground hover:text-foreground"
-            aria-label="Notifications"
-          >
-            <Bell className="h-4 w-4" />
-            <span className="absolute top-1 right-1 flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-            </span>
-          </Button>
-        </div>
+        {/* Notification Bell */}
+        <button
+          onClick={() => alert('Notifications: All subscription crons operational.')}
+          className="relative rounded-xl border border-border bg-card p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          aria-label="Notifications"
+        >
+          <Bell className="h-4 w-4" />
+          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />
+        </button>
 
-        {/* Profile Avatar Pill */}
-        <div className="flex items-center space-x-2 pl-1 border-l border-border/80">
-          <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-indigo-500 text-white font-bold text-xs uppercase shadow-sm">
-            {user?.name ? user.name.slice(0, 2) : 'US'}
-            <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-background" />
+        {/* User Identity Avatar */}
+        <div className="hidden sm:flex items-center space-x-2 pl-2 border-l border-border">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-primary to-indigo-500 text-xs font-bold text-white shadow-md">
+            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
           </div>
-          <span className="hidden xl:inline text-xs font-semibold text-foreground max-w-[120px] truncate">
-            {user?.name}
-          </span>
+          <div className="hidden lg:block text-left">
+            <p className="text-xs font-semibold text-foreground leading-tight truncate max-w-[120px]">
+              {user?.name || 'Session Active'}
+            </p>
+            <p className="text-[10px] text-muted-foreground leading-tight">
+              {user?.company || role}
+            </p>
+          </div>
         </div>
       </div>
     </header>
@@ -191,4 +194,3 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle }) => {
 };
 
 export default Navbar;
-
