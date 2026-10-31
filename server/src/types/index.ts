@@ -128,11 +128,16 @@ export interface IProduct {
   code: string;
   description?: string;
   category: string;
+  type: string;
+  salesPrice: Types.Decimal128;
+  costPrice?: Types.Decimal128;
+  notes?: string;
   status: ProductStatus;
   isRecurring: boolean;
   taxRule?: Types.ObjectId | string;
   createdBy?: Types.ObjectId | string;
   metadata?: Record<string, any>;
+  variantsCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -148,8 +153,10 @@ export interface IProductVariant {
   _id: Types.ObjectId | string;
   product: Types.ObjectId | string;
   name: string;
+  value?: string;
   sku: string;
   price: Types.Decimal128;
+  priceAdjustment: Types.Decimal128;
   currency: string;
   billingCycle: BillingCycle;
   attributes: IVariantAttribute[];
@@ -175,6 +182,13 @@ export interface IPlan {
   billingInterval: number;
   trialPeriodDays: number;
   setupFee: Types.Decimal128;
+  minimumQuantity: number;
+  startDate: Date;
+  endDate?: Date | null;
+  autoClose: boolean;
+  allowEarlyClosure: boolean;
+  allowPause: boolean;
+  allowRenewal: boolean;
   status: PlanStatus;
   isPublic: boolean;
   taxRule?: Types.ObjectId | string;

@@ -12,11 +12,14 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export interface EmptyStateProps {
-  icon?: LucideIcon;
+  /** Accept either a Lucide icon component or arbitrary ReactNode */
+  icon?: LucideIcon | React.ReactNode;
   title: string;
   description: string;
   actionLabel?: string;
   onAction?: () => void;
+  /** Custom action element (overrides actionLabel/onAction) */
+  action?: React.ReactNode;
   secondaryActionLabel?: string;
   onSecondaryAction?: () => void;
   className?: string;
@@ -24,16 +27,24 @@ export interface EmptyStateProps {
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
-  icon: Icon = FileQuestion,
+  icon,
   title,
   description,
   actionLabel,
   onAction,
+  action,
   secondaryActionLabel,
   onSecondaryAction,
   className,
   bordered = true,
 }) => {
+  // Determine how to render the icon
+  const renderIcon = () => {
+    if (!icon) return <FileQuestion className="h-8 w-8 text-primary" />;
+    if (React.isValidElement(icon)) return icon;
+    const IconComp = icon as LucideIcon;
+    return <IconComp className="h-8 w-8 text-primary" />;
+  };
   return (
     <div
       className={cn(
@@ -43,7 +54,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       )}
     >
       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 text-primary mb-4 shadow-inner">
-        <Icon className="h-8 w-8 text-primary" />
+        {renderIcon()}
       </div>
 
       <h3 className="text-lg font-semibold text-foreground tracking-tight mb-1.5">
@@ -54,9 +65,10 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         {description}
       </p>
 
-      {(actionLabel || secondaryActionLabel) && (
+      {(action || actionLabel || secondaryActionLabel) && (
         <div className="flex flex-wrap items-center justify-center gap-3">
-          {actionLabel && (
+          {action}
+          {!action && actionLabel && (
             <Button
               onClick={onAction}
               leftIcon={<Plus className="h-4 w-4" />}

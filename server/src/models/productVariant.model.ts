@@ -27,6 +27,12 @@ const productVariantSchema = new Schema<IProductVariantDocument>(
       minlength: [2, 'Variant name must be at least 2 characters'],
       maxlength: [150, 'Variant name cannot exceed 150 characters'],
     },
+    // Variant value (e.g. "Starter", "Enterprise", "Odoo")
+    value: {
+      type: String,
+      trim: true,
+      maxlength: [200, 'Variant value cannot exceed 200 characters'],
+    },
     sku: {
       type: String,
       required: [true, 'SKU is required'],
@@ -43,6 +49,11 @@ const productVariantSchema = new Schema<IProductVariantDocument>(
         validator: (v: mongoose.Types.Decimal128) => Money.from(v).greaterThanOrEqualTo(0),
         message: 'Price cannot be negative',
       },
+    },
+    // Price adjustment relative to base product sales price
+    priceAdjustment: {
+      type: Schema.Types.Decimal128,
+      default: () => Money.toDecimal128(0),
     },
     currency: {
       type: String,

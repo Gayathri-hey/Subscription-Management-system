@@ -20,6 +20,11 @@ import { AdminProducts } from '@/pages/admin/AdminProducts';
 import { AdminPlans } from '@/pages/admin/AdminPlans';
 import { AdminReports } from '@/pages/admin/AdminReports';
 import { AdminSettings } from '@/pages/admin/AdminSettings';
+import { AdminTaxes } from '@/pages/admin/AdminTaxes';
+
+// Phase 2 Form Pages
+import { ProductFormPage } from '@/pages/admin/ProductFormPage';
+import { PlanFormPage } from '@/pages/admin/PlanFormPage';
 
 // Staff Pages
 import { StaffDashboard } from '@/pages/staff/StaffDashboard';
@@ -80,8 +85,20 @@ function App() {
               <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="/admin/staff" element={<AdminStaff />} />
               <Route path="/admin/users" element={<AdminUsers />} />
+
+              {/* ── Phase 2: Product Routes ── */}
               <Route path="/admin/products" element={<AdminProducts />} />
+              <Route path="/admin/products/new" element={<ProductFormPage />} />
+              <Route path="/admin/products/:id" element={<ProductFormPage />} />
+
+              {/* ── Phase 2: Plan Routes ── */}
               <Route path="/admin/plans" element={<AdminPlans />} />
+              <Route path="/admin/plans/new" element={<PlanFormPage />} />
+              <Route path="/admin/plans/:id" element={<PlanFormPage />} />
+
+              {/* ── Phase 2: Tax Routes ── */}
+              <Route path="/admin/taxes" element={<AdminTaxes />} />
+
               <Route path="/admin/reports" element={<AdminReports />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
             </Route>

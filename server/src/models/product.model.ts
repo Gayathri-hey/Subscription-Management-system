@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import { IProduct, ProductStatus } from '../types';
+import { Money } from '../utils/money';
 
 export interface IProductDocument extends Omit<IProduct, '_id'>, Document {}
 
@@ -18,7 +19,6 @@ const productSchema = new Schema<IProductDocument>(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be URL friendly (lowercase letters, numbers, hyphens)'],
       index: true,
     },
     code: {
@@ -40,6 +40,37 @@ const productSchema = new Schema<IProductDocument>(
       required: [true, 'Category is required'],
       trim: true,
       index: true,
+    },
+    // Product type (e.g. Software, Hardware, Service)
+    type: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Type cannot exceed 100 characters'],
+      default: 'Service',
+    },
+    // Sales price (customer-facing)
+    salesPrice: {
+      type: Schema.Types.Decimal128,
+      required: [true, 'Sales price is required'],
+      validate: {
+        validator: (v: mongoose.Types.Decimal128) => Money.from(v).greaterThanOrEqualTo(0),
+        message: 'Sales price cannot be negative',
+      },
+      default: () => Money.toDecimal128(0),
+    },
+    // Cost price (internal)
+    costPrice: {
+      type: Schema.Types.Decimal128,
+      validate: {
+        validator: (v: mongoose.Types.Decimal128) => v == null || Money.from(v).greaterThanOrEqualTo(0),
+        message: 'Cost price cannot be negative',
+      },
+    },
+    // Internal notes
+    notes: {
+      type: String,
+      trim: true,
+      maxlength: [5000, 'Notes cannot exceed 5000 characters'],
     },
     status: {
       type: String,
@@ -70,8 +101,14 @@ const productSchema = new Schema<IProductDocument>(
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
+    toJSON: {
+      virtuals: true,
+      transform: (_doc, ret) => Money.transformDecimal128(ret),
+    },
+    toObject: {
+      virtuals: true,
+      transform: (_doc, ret) => Money.transformDecimal128(ret),
+    },
   }
 );
 
@@ -82,4 +119,3 @@ productSchema.index({ status: 1, createdAt: -1 });
 
 export const Product: Model<IProductDocument> = mongoose.model<IProductDocument>('Product', productSchema);
 export default Product;
-

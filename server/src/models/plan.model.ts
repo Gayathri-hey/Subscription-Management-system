@@ -72,6 +72,44 @@ const planSchema = new Schema<IPlanDocument>(
         message: 'Setup fee cannot be negative',
       },
     },
+    // Minimum quantity for this plan
+    minimumQuantity: {
+      type: Number,
+      default: 1,
+      min: [1, 'Minimum quantity must be at least 1'],
+    },
+    // Plan lifecycle dates
+    startDate: {
+      type: Date,
+      required: [true, 'Start date is required'],
+      default: Date.now,
+    },
+    endDate: {
+      type: Date,
+      validate: {
+        validator: function (this: IPlanDocument, v: Date) {
+          return !v || !this.startDate || v >= this.startDate;
+        },
+        message: 'End date must be on or after start date',
+      },
+    },
+    // Plan configuration flags
+    autoClose: {
+      type: Boolean,
+      default: true,
+    },
+    allowEarlyClosure: {
+      type: Boolean,
+      default: false,
+    },
+    allowPause: {
+      type: Boolean,
+      default: false,
+    },
+    allowRenewal: {
+      type: Boolean,
+      default: true,
+    },
     status: {
       type: String,
       enum: {
@@ -112,6 +150,7 @@ const planSchema = new Schema<IPlanDocument>(
 // Indexes
 planSchema.index({ status: 1, isPublic: 1 });
 planSchema.index({ billingCycle: 1, status: 1 });
+planSchema.index({ startDate: 1, endDate: 1 });
 
 export const Plan: Model<IPlanDocument> = mongoose.model<IPlanDocument>('Plan', planSchema);
 export default Plan;
