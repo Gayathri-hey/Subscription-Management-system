@@ -7,12 +7,15 @@ import { RoleGuard } from '@/routes/RoleGuard';
 // Public Auth Pages
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { RegisterPage } from '@/pages/auth/RegisterPage';
+import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ShowcasePage } from '@/pages/ShowcasePage';
 
 // Admin Pages
 import { AdminDashboard } from '@/pages/admin/AdminDashboard';
 import { AdminUsers } from '@/pages/admin/AdminUsers';
+import { AdminStaff } from '@/pages/admin/AdminStaff';
 import { AdminProducts } from '@/pages/admin/AdminProducts';
 import { AdminPlans } from '@/pages/admin/AdminPlans';
 import { AdminReports } from '@/pages/admin/AdminReports';
@@ -35,7 +38,18 @@ import { ROUTE_PATHS, getDefaultDashboardForRole } from '@/types/routes';
 
 /** Root redirect helper based on active authentication and role */
 const RootRedirect: React.FC = () => {
-  const { user, role, isAuthenticated } = useAuth();
+  const { user, role, isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-6 text-foreground">
+        <div className="flex flex-col items-center space-y-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <span className="text-xs text-muted-foreground">Initializing portal...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated || !user || !role) {
     return <Navigate to={ROUTE_PATHS.LOGIN} replace />;
@@ -51,17 +65,20 @@ function App() {
           {/* Public Authentication Routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/" element={<RootRedirect />} />
 
           {/* Unified Dashboard Shell Layout */}
           <Route element={<DashboardLayout />}>
-            {/* UI System Showcase (accessible for reviewer testing) */}
+            {/* UI System Showcase */}
             <Route path="/showcase" element={<ShowcasePage />} />
 
             {/* Admin Protected Routes */}
             <Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="/admin/staff" element={<AdminStaff />} />
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/products" element={<AdminProducts />} />
               <Route path="/admin/plans" element={<AdminPlans />} />

@@ -20,10 +20,13 @@ export const ROUTE_PATHS = {
   // Public Auth Routes
   LOGIN: '/login',
   REGISTER: '/register',
+  FORGOT_PASSWORD: '/forgot-password',
+  RESET_PASSWORD: '/reset-password',
 
   // Admin Workspace
   ADMIN_DASHBOARD: '/admin/dashboard',
   ADMIN_USERS: '/admin/users',
+  ADMIN_STAFF: '/admin/staff',
   ADMIN_PRODUCTS: '/admin/products',
   ADMIN_PLANS: '/admin/plans',
   ADMIN_REPORTS: '/admin/reports',
@@ -69,6 +72,28 @@ export const APP_ROUTES: Record<string, RouteMetadata> = {
     layout: 'auth',
     navCategory: 'auth',
   },
+  FORGOT_PASSWORD: {
+    id: 'auth-forgot-password',
+    path: ROUTE_PATHS.FORGOT_PASSWORD,
+    title: 'Forgot Password',
+    breadcrumb: 'Forgot Password',
+    description: 'Request a secure password reset email link.',
+    isPublic: true,
+    requiresAuth: false,
+    layout: 'auth',
+    navCategory: 'auth',
+  },
+  RESET_PASSWORD: {
+    id: 'auth-reset-password',
+    path: ROUTE_PATHS.RESET_PASSWORD,
+    title: 'Reset Password',
+    breadcrumb: 'Reset Password',
+    description: 'Update account password with verification token.',
+    isPublic: true,
+    requiresAuth: false,
+    layout: 'auth',
+    navCategory: 'auth',
+  },
 
   // ─── Admin Workspace ────────────────────────────────────────────────────────
   ADMIN_DASHBOARD: {
@@ -84,6 +109,21 @@ export const APP_ROUTES: Record<string, RouteMetadata> = {
     showInNav: true,
     navCategory: 'admin',
     iconName: 'LayoutDashboard',
+  },
+  ADMIN_STAFF: {
+    id: 'admin-staff',
+    path: ROUTE_PATHS.ADMIN_STAFF,
+    title: 'Staff Management',
+    breadcrumb: 'Staff Management',
+    description: 'Create, monitor, and configure operational staff team members.',
+    allowedRoles: ['ADMIN'],
+    isPublic: false,
+    requiresAuth: true,
+    layout: 'dashboard',
+    showInNav: true,
+    navCategory: 'admin',
+    iconName: 'Users',
+    badge: 'Operations',
   },
   ADMIN_USERS: {
     id: 'admin-users',

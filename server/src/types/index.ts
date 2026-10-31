@@ -16,6 +16,8 @@ export interface IUser {
   phone?: string;
   avatar?: string;
   refreshToken?: string;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   isEmailVerified: boolean;
   lastLoginAt?: Date;
   createdAt: Date;

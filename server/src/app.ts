@@ -1,6 +1,7 @@
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { corsOptions } from './config/cors';
 import { apiLimiter } from './middleware/rateLimiter';
 import { requestLogger } from './middleware/requestLogger';
@@ -20,6 +21,7 @@ app.use(
 );
 
 app.use(cors(corsOptions));
+app.use(cookieParser());
 
 // ─── Rate Limiting ─────────────────────────────────────────────────────────────
 app.use('/api', apiLimiter);

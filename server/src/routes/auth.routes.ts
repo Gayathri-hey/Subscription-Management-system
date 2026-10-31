@@ -1,60 +1,74 @@
-import { Router, Request, Response } from 'express';
-import { ApiResponseHelper } from '../utils/apiResponse';
+import { Router } from 'express';
+import { authController } from '../controllers/auth.controller';
+import { authenticate } from '../middleware/auth';
+import { validateBody } from '../middleware/validate';
+import { authLimiter } from '../middleware/rateLimiter';
+import {
+  registerSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from '../validators/auth.validator';
 
 const router = Router();
 
 /**
- * @route   POST /api/auth/login
- * @desc    Placeholder for user authentication
+ * @route   POST /api/auth/register
+ * @desc    Register a new customer account
  * @access  Public
  */
-router.post('/login', (req: Request, res: Response) => {
-  const { email } = req.body;
-  return ApiResponseHelper.sendSuccess(
-    res,
-    'Login endpoint placeholder active',
-    {
-      message: 'Auth login route placeholder active. Full authentication implementation staged for Task 2.',
-      receivedEmail: email,
-    }
-  );
-});
+router.post('/register', authLimiter, validateBody(registerSchema), authController.register);
 
 /**
- * @route   POST /api/auth/register
- * @desc    Placeholder for customer registration
+ * @route   POST /api/auth/login
+ * @desc    Authenticate user & establish session
  * @access  Public
  */
-router.post('/register', (req: Request, res: Response) => {
-  const { name, email, company, role = 'customer' } = req.body;
-  return ApiResponseHelper.sendCreated(
-    res,
-    'Registration endpoint placeholder active',
-    {
-      message: 'Auth register route placeholder active. Full registration implementation staged for Task 2.',
-      registeredUser: {
-        name,
-        email,
-        company,
-        role,
-      },
-    }
-  );
-});
+router.post('/login', authLimiter, validateBody(loginSchema), authController.login);
+
+/**
+ * @route   POST /api/auth/refresh
+ * @desc    Refresh session tokens via httpOnly refresh token cookie
+ * @access  Public (requires cookie/token)
+ */
+router.post('/refresh', authController.refresh);
+
+/**
+ * @route   POST /api/auth/logout
+ * @desc    Log out active user and invalidate token
+ * @access  Protected
+ */
+router.post('/logout', authenticate, authController.logout);
+
+/**
+ * @route   POST /api/auth/forgot-password
+ * @desc    Send password reset email link
+ * @access  Public
+ */
+router.post(
+  '/forgot-password',
+  authLimiter,
+  validateBody(forgotPasswordSchema),
+  authController.forgotPassword
+);
+
+/**
+ * @route   POST /api/auth/reset-password
+ * @desc    Reset password using email token
+ * @access  Public
+ */
+router.post(
+  '/reset-password',
+  authLimiter,
+  validateBody(resetPasswordSchema),
+  authController.resetPassword
+);
 
 /**
  * @route   GET /api/auth/me
- * @desc    Placeholder for current session retrieval
+ * @desc    Get currently authenticated user & linked customer profile
  * @access  Protected
  */
-router.get('/me', (_req: Request, res: Response) => {
-  return ApiResponseHelper.sendSuccess(
-    res,
-    'Session endpoint placeholder active',
-    {
-      message: 'Session verification placeholder active.',
-    }
-  );
-});
+router.get('/me', authenticate, authController.getMe);
 
 export default router;

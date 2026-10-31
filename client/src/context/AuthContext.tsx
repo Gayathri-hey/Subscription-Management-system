@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { authStorage } from '@/services/apiClient';
+import { apiClient, authStorage } from '@/services/apiClient';
 import type { Role, User } from '@/types/api';
 
 export interface AuthContextType {
@@ -8,8 +8,9 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (user: User, token?: string) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   switchRole: (newRole: Role) => void;
+  refreshUser: () => Promise<void>;
 }
 
 const DEMO_USERS: Record<Role, User> = {
@@ -42,17 +43,43 @@ const DEMO_USERS: Record<Role, User> = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    const saved = authStorage.getUser();
-    if (saved) return saved;
-    // Default to Admin demo user for seamless out-of-the-box development & preview
-    return DEMO_USERS.ADMIN;
-  });
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Check current session from HTTP-only cookie on application load
+  const checkSession = async () => {
+    try {
+      const response = await apiClient.get<{ user: any; customer?: any }>('/auth/me');
+      if (response.data?.user) {
+        const u = response.data.user;
+        const normalizedRole = (u.role || 'customer').toUpperCase() as Role;
+        const mappedUser: User = {
+          id: u.id || u._id,
+          name: u.name,
+          email: u.email,
+          role: normalizedRole,
+          status: (u.status || 'active').toUpperCase() as any,
+          phone: u.phone,
+          company: response.data.customer?.companyName || u.company || 'Enterprise Org',
+        };
+        setUser(mappedUser);
+        authStorage.setUser(mappedUser);
+      }
+    } catch {
+      // No active session cookie or session expired
+      setUser(null);
+      authStorage.clear();
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
+    checkSession();
+
     const handleUnauthorized = () => {
-      logout();
+      setUser(null);
+      authStorage.clear();
     };
 
     window.addEventListener('auth:unauthorized', handleUnauthorized);
@@ -61,22 +88,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
-  const login = (newUser: User, token: string = 'demo_access_token_jwt') => {
+  const login = (newUser: User, token?: string) => {
     setUser(newUser);
     authStorage.setUser(newUser);
-    authStorage.setToken(token);
+    if (token) {
+      authStorage.setToken(token);
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    authStorage.clear();
+  const logout = async () => {
+    try {
+      await apiClient.post('/auth/logout');
+    } catch {
+      // continue cleanup even if request fails
+    } finally {
+      setUser(null);
+      authStorage.clear();
+    }
   };
 
   const switchRole = (newRole: Role) => {
     const nextUser = DEMO_USERS[newRole];
     setUser(nextUser);
     authStorage.setUser(nextUser);
-    authStorage.setToken(`demo_${newRole.toLowerCase()}_token`);
+  };
+
+  const refreshUser = async () => {
+    await checkSession();
   };
 
   return (
@@ -89,6 +127,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         login,
         logout,
         switchRole,
+        refreshUser,
       }}
     >
       {children}
@@ -103,4 +142,3 @@ export const useAuth = (): AuthContextType => {
   }
   return ctx;
 };
-

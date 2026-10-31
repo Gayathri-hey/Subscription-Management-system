@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { UserPlus, Trash2, Ban } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { UserPlus, Trash2, Ban, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DataTable, type Column } from '@/components/shared/DataTable';
@@ -195,12 +196,19 @@ export const AdminUsers: React.FC = () => {
           </p>
         </div>
 
-        <Button
-          leftIcon={<UserPlus className="h-4 w-4" />}
-          onClick={() => setIsAddModalOpen(true)}
-        >
-          Add User
-        </Button>
+        <div className="flex items-center space-x-2">
+          <Link to="/admin/staff">
+            <Button variant="outline" leftIcon={<Users className="h-4 w-4" />}>
+              Manage Staff
+            </Button>
+          </Link>
+          <Button
+            leftIcon={<UserPlus className="h-4 w-4" />}
+            onClick={() => setIsAddModalOpen(true)}
+          >
+            Add User
+          </Button>
+        </div>
       </div>
 
       <Card>

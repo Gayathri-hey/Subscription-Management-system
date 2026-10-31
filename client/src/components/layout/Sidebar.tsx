@@ -35,6 +35,7 @@ interface NavItem {
 const ADMIN_NAV_ITEMS: NavItem[] = [
   { title: 'Dashboard', path: ROUTE_PATHS.ADMIN_DASHBOARD, icon: LayoutDashboard },
   { title: 'User Management', path: ROUTE_PATHS.ADMIN_USERS, icon: Users, badge: 'Staff & Clients' },
+  { title: 'Staff Management', path: ROUTE_PATHS.ADMIN_STAFF, icon: UserCheck, badge: 'Staff' },
   { title: 'Product Catalog', path: ROUTE_PATHS.ADMIN_PRODUCTS, icon: Package },
   { title: 'Subscription Plans', path: ROUTE_PATHS.ADMIN_PLANS, icon: Layers },
   { title: 'Financial Reports', path: ROUTE_PATHS.ADMIN_REPORTS, icon: BarChart3 },

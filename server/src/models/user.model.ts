@@ -1,7 +1,10 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import bcrypt from 'bcryptjs';
 import { IUser, UserRole, UserStatus } from '../types';
 
-export interface IUserDocument extends Omit<IUser, '_id'>, Document {}
+export interface IUserDocument extends Omit<IUser, '_id'>, Document {
+  comparePassword(candidatePassword: string): Promise<boolean>;
+}
 
 const userSchema = new Schema<IUserDocument>(
   {
@@ -62,6 +65,14 @@ const userSchema = new Schema<IUserDocument>(
       type: String,
       select: false,
     },
+    resetPasswordToken: {
+      type: String,
+      select: false,
+    },
+    resetPasswordExpires: {
+      type: Date,
+      select: false,
+    },
     isEmailVerified: {
       type: Boolean,
       default: false,
@@ -77,12 +88,21 @@ const userSchema = new Schema<IUserDocument>(
       transform: (_doc, ret) => {
         delete (ret as any).passwordHash;
         delete (ret as any).refreshToken;
+        delete (ret as any).resetPasswordToken;
+        delete (ret as any).resetPasswordExpires;
         return ret;
       },
     },
     toObject: { virtuals: true },
   }
 );
+
+// Method to verify password securely
+userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
+  const hash = this.passwordHash;
+  if (!hash) return false;
+  return bcrypt.compare(candidatePassword, hash);
+};
 
 // Compound index for querying users by role and status
 userSchema.index({ role: 1, status: 1 });

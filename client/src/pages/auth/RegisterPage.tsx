@@ -2,20 +2,18 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Sparkles,
-  Shield,
-  Briefcase,
-  UserCheck,
   Lock,
   Mail,
   User,
   Building,
   ArrowRight,
   AlertCircle,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/shared/FormField';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/context/AuthContext';
 import { apiClient } from '@/services/apiClient';
 import type { Role, User as UserType } from '@/types/api';
@@ -25,15 +23,21 @@ export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const [role, setRole] = useState<Role>('CUSTOMER');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [company, setCompany] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [agreeTerms, setAgreeTerms] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Validation rules evaluation
+  const hasMinLength = password.length > 8;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
+  const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(password);
+  const passwordsMatch = password.length > 0 && password === confirmPassword;
+  const isPasswordValid = hasMinLength && hasUppercase && hasLowercase && hasSpecialChar;
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,60 +48,56 @@ export const RegisterPage: React.FC = () => {
       return;
     }
     if (!email.trim() || !email.includes('@')) {
-      setErrorMessage('Please enter a valid business email address.');
+      setErrorMessage('Please enter a valid email address.');
       return;
     }
-    if (password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters long.');
+    if (!isPasswordValid) {
+      setErrorMessage('Password must satisfy all security requirements listed below.');
       return;
     }
-    if (password !== confirmPassword) {
-      setErrorMessage('Passwords do not match.');
-      return;
-    }
-    if (!agreeTerms) {
-      setErrorMessage('You must agree to the Terms of Service to proceed.');
+    if (!passwordsMatch) {
+      setErrorMessage('Password and confirm password must match.');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // Attempt backend registration endpoint (fallback smoothly if backend auth is not yet implemented)
-      try {
-        const response = await apiClient.post<{ user: UserType; accessToken: string }>('/auth/register', {
-          name,
-          email,
-          company,
-          role: role.toLowerCase(),
-          password,
-        });
+      const response = await apiClient.post<{
+        user: any;
+        accessToken: string;
+        customer?: any;
+      }>('/auth/register', {
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+        confirmPassword,
+        companyName: companyName.trim() || undefined,
+      });
 
-        if (response.data?.user) {
-          login(response.data.user, response.data.accessToken);
-          navigate(getDefaultDashboardForRole(response.data.user.role));
-          return;
-        }
-      } catch {
-        // Backend auth staged for future task - simulate successful onboarding
+      if (response.data?.user) {
+        const u = response.data.user;
+        const mappedUser: UserType = {
+          id: u.id || u._id,
+          name: u.name,
+          email: u.email,
+          role: 'CUSTOMER',
+          status: 'ACTIVE',
+          company: response.data.customer?.companyName || companyName || 'Customer HQ',
+        };
+
+        login(mappedUser, response.data.accessToken);
+        navigate(getDefaultDashboardForRole('CUSTOMER'));
+        return;
       }
 
-      // Simulated session for development preview
-      const newUser: UserType = {
-        id: `usr_${Date.now()}`,
-        name,
-        email,
-        company: company || (role === 'CUSTOMER' ? 'Acme Corp' : 'SubScribe HQ'),
-        role,
-        status: 'ACTIVE',
-      };
-
-      login(newUser, `demo_token_${role.toLowerCase()}`);
-      navigate(getDefaultDashboardForRole(role));
+      navigate('/login');
     } catch (err: unknown) {
-      setErrorMessage(
-        err instanceof Error ? err.message : 'Registration could not be completed. Please try again.'
-      );
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Registration could not be completed. Please try again.';
+      setErrorMessage(message);
     } finally {
       setIsLoading(false);
     }
@@ -120,45 +120,16 @@ export const RegisterPage: React.FC = () => {
             SubScribe<span className="text-primary font-black">Pro</span>
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Create your account and start managing subscriptions
+            Create your Customer account to manage subscriptions & billing
           </p>
         </div>
 
         <Card className="border-border shadow-2xl backdrop-blur-md bg-card/80">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-lg">Create a new account</CardTitle>
+            <CardTitle className="text-lg">Customer Registration</CardTitle>
             <CardDescription className="text-xs">
-              Select your initial account type and enter your business details.
+              Fill in your details to create your secure customer portal account.
             </CardDescription>
-
-            {/* Role Type Selector Pills */}
-            <div className="pt-3">
-              <label className="text-xs font-semibold text-muted-foreground mb-2 block">
-                Account Workspace Type
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { r: 'CUSTOMER' as Role, label: 'Customer', icon: UserCheck, desc: 'Client portal' },
-                  { r: 'STAFF' as Role, label: 'Staff', icon: Briefcase, desc: 'Operations' },
-                  { r: 'ADMIN' as Role, label: 'Admin', icon: Shield, desc: 'Full access' },
-                ].map(({ r, label, icon: Icon, desc }) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => setRole(r)}
-                    className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
-                      role === r
-                        ? 'border-primary bg-primary/10 text-primary shadow-sm ring-1 ring-primary/30'
-                        : 'border-border/60 hover:border-border hover:bg-muted/40 text-muted-foreground'
-                    }`}
-                  >
-                    <Icon className="h-4 w-4 mb-1" />
-                    <span className="text-xs font-bold">{label}</span>
-                    <span className="text-[10px] text-muted-foreground/80">{desc}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
           </CardHeader>
 
           <CardContent className="space-y-4 pt-1">
@@ -182,7 +153,7 @@ export const RegisterPage: React.FC = () => {
 
               <FormField
                 type="email"
-                label="Business Email"
+                label="Email Address"
                 placeholder="name@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -192,10 +163,10 @@ export const RegisterPage: React.FC = () => {
 
               <FormField
                 type="text"
-                label="Company / Organization"
+                label="Company / Organization (Optional)"
                 placeholder="e.g. Acme Technologies Inc."
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
                 leftAdornment={<Building className="h-4 w-4 text-muted-foreground" />}
               />
 
@@ -203,7 +174,7 @@ export const RegisterPage: React.FC = () => {
                 <FormField
                   type="password"
                   label="Password"
-                  placeholder="Min. 6 characters"
+                  placeholder="Min. 9 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   leftAdornment={<Lock className="h-4 w-4 text-muted-foreground" />}
@@ -221,13 +192,35 @@ export const RegisterPage: React.FC = () => {
                 />
               </div>
 
-              <div className="pt-1">
-                <Checkbox
-                  id="agree-terms"
-                  checked={agreeTerms}
-                  onChange={(e) => setAgreeTerms(e.target.checked)}
-                  label="I agree to the Terms of Service and Privacy Policy."
-                />
+              {/* Password Requirement Checklist */}
+              <div className="rounded-xl border border-border/60 bg-muted/30 p-3 text-xs space-y-1.5">
+                <div className="font-semibold text-muted-foreground text-[11px] uppercase tracking-wider mb-1">
+                  Password Requirements:
+                </div>
+                <div className="grid grid-cols-2 gap-1 text-[11px]">
+                  <div className={`flex items-center space-x-1.5 ${hasMinLength ? 'text-emerald-400 font-medium' : 'text-muted-foreground'}`}>
+                    {hasMinLength ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> : <XCircle className="h-3.5 w-3.5 shrink-0" />}
+                    <span>More than 8 characters</span>
+                  </div>
+                  <div className={`flex items-center space-x-1.5 ${hasUppercase ? 'text-emerald-400 font-medium' : 'text-muted-foreground'}`}>
+                    {hasUppercase ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> : <XCircle className="h-3.5 w-3.5 shrink-0" />}
+                    <span>Uppercase letter (A-Z)</span>
+                  </div>
+                  <div className={`flex items-center space-x-1.5 ${hasLowercase ? 'text-emerald-400 font-medium' : 'text-muted-foreground'}`}>
+                    {hasLowercase ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> : <XCircle className="h-3.5 w-3.5 shrink-0" />}
+                    <span>Lowercase letter (a-z)</span>
+                  </div>
+                  <div className={`flex items-center space-x-1.5 ${hasSpecialChar ? 'text-emerald-400 font-medium' : 'text-muted-foreground'}`}>
+                    {hasSpecialChar ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> : <XCircle className="h-3.5 w-3.5 shrink-0" />}
+                    <span>Special character (!@#$)</span>
+                  </div>
+                </div>
+                {confirmPassword && (
+                  <div className={`flex items-center space-x-1.5 text-[11px] pt-1 border-t border-border/40 ${passwordsMatch ? 'text-emerald-400 font-medium' : 'text-rose-400'}`}>
+                    {passwordsMatch ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> : <XCircle className="h-3.5 w-3.5 shrink-0" />}
+                    <span>{passwordsMatch ? 'Passwords match' : 'Passwords do not match'}</span>
+                  </div>
+                )}
               </div>
 
               <Button
@@ -236,20 +229,17 @@ export const RegisterPage: React.FC = () => {
                 isLoading={isLoading}
                 rightIcon={<ArrowRight className="h-4 w-4" />}
               >
-                Create {role} Account
+                Create Customer Account
               </Button>
             </form>
           </CardContent>
 
-          <CardFooter className="flex flex-col space-y-3 border-t border-border/60 pt-4 text-xs text-muted-foreground">
+          <CardFooter className="flex flex-col space-y-2 border-t border-border/60 pt-4 text-xs text-muted-foreground">
             <div className="text-center">
               <span>Already have an account? </span>
               <Link to="/login" className="text-primary font-semibold hover:underline">
                 Sign In
               </Link>
-            </div>
-            <div className="text-center text-[11px] text-muted-foreground/60">
-              <span>Staged for Task 6 — Role Structure placeholder</span>
             </div>
           </CardFooter>
         </Card>

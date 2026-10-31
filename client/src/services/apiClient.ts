@@ -8,9 +8,6 @@ import axios, {
 import { ENV } from '@/config/env';
 import type { ApiErrorResponse, ApiResponse, User } from '@/types/api';
 
-const TOKEN_KEY = 'sms_access_token';
-const USER_KEY = 'sms_current_user';
-
 export class ApiError extends Error {
   statusCode: number;
   errors?: { field: string; message: string }[];
@@ -30,54 +27,26 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Storage helpers for authentication session
- */
+// In-memory token storage (DO NOT store authentication tokens in localStorage)
+let inMemoryToken: string | null = null;
+let inMemoryUser: User | null = null;
+
 export const authStorage = {
   getToken(): string | null {
-    try {
-      return localStorage.getItem(TOKEN_KEY);
-    } catch {
-      return null;
-    }
+    return inMemoryToken;
   },
   setToken(token: string | null): void {
-    try {
-      if (token) {
-        localStorage.setItem(TOKEN_KEY, token);
-      } else {
-        localStorage.removeItem(TOKEN_KEY);
-      }
-    } catch {
-      // ignore storage write errors
-    }
+    inMemoryToken = token;
   },
   getUser(): User | null {
-    try {
-      const raw = localStorage.getItem(USER_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
+    return inMemoryUser;
   },
   setUser(user: User | null): void {
-    try {
-      if (user) {
-        localStorage.setItem(USER_KEY, JSON.stringify(user));
-      } else {
-        localStorage.removeItem(USER_KEY);
-      }
-    } catch {
-      // ignore storage write errors
-    }
+    inMemoryUser = user;
   },
   clear(): void {
-    try {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
-    } catch {
-      // ignore
-    }
+    inMemoryToken = null;
+    inMemoryUser = null;
   },
 };
 

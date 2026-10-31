@@ -19,12 +19,13 @@ import { apiClient } from '@/services/apiClient';
 import type { Role, User } from '@/types/api';
 import { getDefaultDashboardForRole } from '@/types/routes';
 
-const DEMO_PRESETS: { role: Role; label: string; email: string; name: string; icon: React.ElementType }[] = [
+const DEMO_PRESETS: { role: Role; label: string; email: string; name: string; defaultPass: string; icon: React.ElementType }[] = [
   {
     role: 'ADMIN',
     label: 'Admin',
     email: 'admin@subscriptions.io',
     name: 'Alexander Wright',
+    defaultPass: 'AdminPass123!',
     icon: Shield,
   },
   {
@@ -32,6 +33,7 @@ const DEMO_PRESETS: { role: Role; label: string; email: string; name: string; ic
     label: 'Staff',
     email: 'sarah.j@subscriptions.io',
     name: 'Sarah Jenkins',
+    defaultPass: 'StaffPass123!',
     icon: Briefcase,
   },
   {
@@ -39,6 +41,7 @@ const DEMO_PRESETS: { role: Role; label: string; email: string; name: string; ic
     label: 'Customer',
     email: 'david@acmecorp.com',
     name: 'David Miller',
+    defaultPass: 'CustomerPass123!',
     icon: UserCheck,
   },
 ];
@@ -49,13 +52,14 @@ export const LoginPage: React.FC = () => {
 
   const [selectedRole, setSelectedRole] = useState<Role>('ADMIN');
   const [email, setEmail] = useState('admin@subscriptions.io');
-  const [password, setPassword] = useState('••••••••••••');
+  const [password, setPassword] = useState('AdminPass123!');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleRolePresetSelect = (preset: (typeof DEMO_PRESETS)[0]) => {
     setSelectedRole(preset.role);
     setEmail(preset.email);
+    setPassword(preset.defaultPass);
     setErrorMessage(null);
   };
 
@@ -65,38 +69,35 @@ export const LoginPage: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      // Attempt real API login with graceful fallback for standalone development/preview
-      try {
-        const response = await apiClient.post<{ user: User; accessToken: string }>('/auth/login', {
-          email,
-          password: password === '••••••••••••' ? 'Password123!' : password,
-        });
+      const response = await apiClient.post<{ user: any; accessToken: string; customer?: any }>('/auth/login', {
+        email: email.trim().toLowerCase(),
+        password,
+      });
 
-        if (response.data?.user) {
-          login(response.data.user, response.data.accessToken);
-          navigate(getDefaultDashboardForRole(response.data.user.role));
-          return;
-        }
-      } catch {
-        // Backend not yet reachable or demo credentials used - proceed with simulated session
+      if (response.data?.user) {
+        const u = response.data.user;
+        const normalizedRole = (u.role || selectedRole).toUpperCase() as Role;
+        const loggedInUser: User = {
+          id: u.id || u._id,
+          name: u.name,
+          email: u.email,
+          role: normalizedRole,
+          status: (u.status || 'ACTIVE').toUpperCase() as any,
+          company: response.data.customer?.companyName || u.company || 'Enterprise Org',
+        };
+
+        login(loggedInUser, response.data.accessToken);
+        navigate(getDefaultDashboardForRole(normalizedRole));
+        return;
       }
 
-      const activePreset = DEMO_PRESETS.find((p) => p.role === selectedRole) || DEMO_PRESETS[0];
-      const demoUser: User = {
-        id: `usr_${selectedRole.toLowerCase()}_01`,
-        name: activePreset.name,
-        email: email || activePreset.email,
-        role: selectedRole,
-        status: 'ACTIVE',
-        company: selectedRole === 'CUSTOMER' ? 'Acme Technologies Inc.' : 'SubScribe HQ',
-      };
-
-      login(demoUser, `demo_token_${selectedRole.toLowerCase()}`);
-      navigate(getDefaultDashboardForRole(selectedRole));
+      throw new Error('Authentication succeeded but user profile was not returned.');
     } catch (err: unknown) {
-      setErrorMessage(
-        err instanceof Error ? err.message : 'Invalid credentials. Please verify your email and password.'
-      );
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Invalid email or password. Please verify your credentials.';
+      setErrorMessage(message);
     } finally {
       setIsLoading(false);
     }
@@ -127,20 +128,20 @@ export const LoginPage: React.FC = () => {
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-lg">Sign in to your account</CardTitle>
             <CardDescription className="text-xs">
-              Select a workspace profile or sign in with your corporate credentials.
+              Enter your registered corporate or customer credentials.
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-5">
-            {/* Fast Demo Role Selector */}
+            {/* Role Demo Quick Autofill */}
             <div className="space-y-1.5">
               <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                Quick Role Demo
+                Demo Accounts
               </span>
               <div className="grid grid-cols-3 gap-2">
                 {DEMO_PRESETS.map((preset) => {
                   const Icon = preset.icon;
-                  const isSelected = selectedRole === preset.role;
+                  const isSelected = selectedRole === preset.role && email === preset.email;
                   return (
                     <button
                       key={preset.role}
@@ -190,16 +191,12 @@ export const LoginPage: React.FC = () => {
 
               <div className="flex items-center justify-between text-xs">
                 <Checkbox label="Remember me" defaultChecked />
-                <a
-                  href="#forgot"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    alert('Password reset instructions sent to your email.');
-                  }}
+                <Link
+                  to="/forgot-password"
                   className="text-primary hover:underline font-medium"
                 >
                   Forgot password?
-                </a>
+                </Link>
               </div>
 
               <Button
@@ -208,7 +205,7 @@ export const LoginPage: React.FC = () => {
                 isLoading={isLoading}
                 rightIcon={<ArrowRight className="h-4 w-4" />}
               >
-                Sign In to {selectedRole} Portal
+                Sign In
               </Button>
             </form>
           </CardContent>
@@ -217,11 +214,8 @@ export const LoginPage: React.FC = () => {
             <div className="text-center">
               <span>Don't have an account? </span>
               <Link to="/register" className="text-primary font-semibold hover:underline">
-                Create an account
+                Register as Customer
               </Link>
-            </div>
-            <div className="text-center text-[11px] text-muted-foreground/60">
-              <span>Powered by React 19, Vite, Tailwind CSS & shadcn/ui</span>
             </div>
           </CardFooter>
         </Card>
