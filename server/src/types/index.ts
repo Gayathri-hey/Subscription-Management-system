@@ -24,11 +24,17 @@ export interface JwtPayload {
 
 // ─── API Response Wrappers ─────────────────────────────────────────────────────
 
+export interface FieldError {
+  field?: string;
+  message: string;
+}
+
 export interface ApiResponse<T = unknown> {
   success: boolean;
   message: string;
   data?: T;
   meta?: PaginationMeta;
+  errors?: FieldError[];
 }
 
 export interface PaginationMeta {
@@ -44,6 +50,26 @@ export interface PaginationQuery {
   search?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+}
+
+// ─── System & Health ──────────────────────────────────────────────────────────
+
+export interface HealthCheckData {
+  status: 'UP' | 'DOWN' | 'DEGRADED';
+  timestamp: string;
+  uptime: number;
+  environment: string;
+  database: {
+    status: 'connected' | 'disconnected' | 'connecting' | 'disconnecting' | 'uninitialized';
+    readyState: number;
+    host?: string;
+    name?: string;
+  };
+  memory: {
+    heapUsedMB: number;
+    heapTotalMB: number;
+    rssMB: number;
+  };
 }
 
 // ─── Subscription ─────────────────────────────────────────────────────────────
